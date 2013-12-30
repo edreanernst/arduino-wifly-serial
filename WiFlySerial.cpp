@@ -6,7 +6,7 @@ Driver for Roving Network's WiFly GSX (c) (tm) b/g WiFi device
 
 Provides moderately-generic WiFi device interface.
 Compatible with Arduino 1.0
-Version 1.05
+Version 1.08
 
 - WiFlyGSX is a relatively intelligent peer.
 - WiFlyGSX may have awoken in a valid configured state while Arduino asleep; 
@@ -54,12 +54,12 @@ Copyright GPL 2.1 Tom Waldock 2011, 2012
 
 
 // Strings stored in Program space
-prog_char s_WIFLYDEVICE_LIBRARY_VERSION[] PROGMEM = "WiFlySerial v1.05" ;   
+prog_char s_WIFLYDEVICE_LIBRARY_VERSION[] PROGMEM = "WiFlySerial v1.08" ;   
 prog_char s_WIFLYDEVICE_JOIN[] PROGMEM = "join " ;   
 prog_char s_WIFLYDEVICE_OPEN[] PROGMEM = "open " ;   
-prog_char s_WIFLYDEVICE_CLOSE[] PROGMEM = "close " ;   
+prog_char s_WIFLYDEVICE_CLOSE[] PROGMEM = "close" ;   
 prog_char s_WIFLYDEVICE_ASSOCIATED[] PROGMEM = "ssociated" ;   
-prog_char s_WIFLYDEVICE_ATTN[] PROGMEM = "$$$" ;   
+prog_char s_WIFLYDEVICE_ATTN[] PROGMEM = "$$$";   
 prog_char s_WIFLYDEVICE_VER[] PROGMEM = "ver" ;
 prog_char s_WIFLYDEVICE_LEAVE_CMD_MODE[] PROGMEM ="exit";
 prog_char s_WIFLYDEVICE_REBOOT[] PROGMEM ="reboot";
@@ -338,6 +338,9 @@ WiFlySerial::WiFlySerial(byte pinReceive, byte pinSend) : uart (pinReceive, pinS
   iLocalPort = WIFLY_DEFAULT_LOCAL_PORT;
   iRemotePort = WIFLY_DEFAULT_REMOTE_PORT;
   
+  // default is UTC timezone
+  lUTC_Offset_seconds = 0;
+  
     // ensure a default sink.
   pDebugChannel = NULL;
   
@@ -446,12 +449,10 @@ int WiFlySerial::ScanForPattern( char* responseBuffer, const int buflen,  const 
   boolean bReceivedCR = false;
   
  WiFlyFixedPrompts[WIFLY_MSG_EXPECTED] = (char*) pExpectedPrompt;
- WiFlyFixedPrompts[WIFLY_MSG_PROMPT] = szWiFlyPrompt;
+ WiFlyFixedPrompts[WIFLY_MSG_PROMPT] = (char*) szWiFlyPrompt;
  char* pFixedCurrent[N_PROMPTS];
  int iFixedPrompt = 0;
- 
- uart.flush();
-  
+   
  for (int i=0; i< N_PROMPTS; i++) {
   pFixedCurrent[i] = WiFlyFixedPrompts[i];
  }
@@ -460,7 +461,7 @@ int WiFlySerial::ScanForPattern( char* responseBuffer, const int buflen,  const 
   unsigned long TimeAtStart = millis()  ;  // capture current time
       
   while (bWaiting ) {    
-    if (uart.available() > 0 ) {
+    if ( uart.available() > 0 ) {
       chResponse = uart.read(); 
       DebugPrint(chResponse);
       
@@ -473,14 +474,13 @@ int WiFlySerial::ScanForPattern( char* responseBuffer, const int buflen,  const 
             
       for ( iFixedPrompt = 0; iFixedPrompt< N_PROMPTS; iFixedPrompt++ ) {
         if ( chResponse == *pFixedCurrent[iFixedPrompt] ) {
-          
           // deal with 'open' and 'scan' version-prompt appearing BEFORE result; ignore it
           if ( (!bPromptAfterResult) && (iFixedPrompt == WIFLY_MSG_PROMPT || iFixedPrompt == WIFLY_MSG_PROMPT2) /* standard version-prompt */  ) {
             bWaiting = true;
             iPromptFound |= PROMPT_READY;
           } else {
-            bWaiting = ( *(++pFixedCurrent[iFixedPrompt]) == '\0' ? false : true ) ; // done when end-of-string encountered.
-            if (!bWaiting) {
+            bWaiting = ( *(++pFixedCurrent[iFixedPrompt]) == '\0' ? false : true ) ; // done when end-of-string encountered.            
+            if (!bWaiting) {				
               iPromptFound |= WiFlyFixedFlags[iFixedPrompt];  // if a prompt found then grab its flag.
             }
           } // handle prompt-BEFORE-result case
@@ -500,11 +500,9 @@ int WiFlySerial::ScanForPattern( char* responseBuffer, const int buflen,  const 
        if (iPromptFound & PROMPT_CLOSE ) {
          bWiFlyConnectionOpen = false;
          bWiFlyInCommandMode = true;
-         
-         // DebugPrint("*** Caught CLOSE in ScanForPattern() *** ");
          iPromptFound &= (!WiFlyFixedFlags[WIFLY_MSG_OPEN]);  // clear prior open
        }
-                
+                       
     } // if anything in uart
     // did we time-out?
     if ( (millis() - TimeAtStart) >= WaitTime) {
@@ -542,32 +540,30 @@ boolean WiFlySerial::StartCommandMode(char* pBuffer, const int bufSize) {
   }
 
   unsigned long TimeOutTime = millis() + ATTN_WAIT_TIME;
-  // DebugPrint("bInCmdMode=");
-  // DebugPrint( ( bWiFlyInCommandMode ? "true" : "false" ) );
-
   // check if actually in command mode:
   while  (!bWiFlyInCommandMode || bWaiting ) {
               
        // if not effectively in command mode, try $$$
        if ( !bWiFlyInCommandMode) {
         
-         // DebugPrint(" Printing $$$");
-        
+         uart.flush();
          // Send $$$ , wait a moment, look for CMD
          delay(COMMAND_MODE_GUARD_TIME );
-         uart << GetBuffer_P(STI_WIFLYDEVICE_ATTN, responseBuffer, bufSize) ;
-         delay(COMMAND_MODE_GUARD_TIME );
-         if (nTries > 2)  {
+         uart <<  GetBuffer_P(STI_WIFLYDEVICE_ATTN, responseBuffer, bufSize) ;
+         uart.flush();
+         delay(COMMAND_MODE_GUARD_TIME  );
+         if (nTries >= 2)  {
             uart << "\r";
+            uart.flush();
           }
-          uart.flush();
          // expect CMD without a cr
-         iPromptResult = ScanForPattern( responseBuffer, bufSize, WiFlyFixedPrompts[WIFLY_MSG_CMD], false, ATTN_WAIT_TIME);
+         // WiFlyFixedPrompts[WIFLY_MSG_CMD]
+         iPromptResult = ScanForPattern( responseBuffer, bufSize, "CMD", true, ATTN_WAIT_TIME);
          
          if ( iPromptResult & ( PROMPT_EXPECTED_TOKEN_FOUND | PROMPT_READY |PROMPT_CMD_MODE |PROMPT_CMD_ERR ) ) {
             bWiFlyInCommandMode = true;
             bWaiting = false;
-         } else {
+        } else {
             bWiFlyInCommandMode = false;
          }      // if one of several indicators of command-mode received.     
           
@@ -882,8 +878,8 @@ boolean WiFlySerial::openConnection(const char* pURL, const unsigned long iWaitT
   strcat (bufCommand, pURL);
   strcat (bufCommand, " ");
   itoa( iRemotePort, strchr(bufCommand, '\0'), 10);
-  //DebugPrint("Opening:");
-  //DebugPrint(bufCommand);
+  DebugPrint("openConnection:");
+  DebugPrint(bufCommand);
   bWiFlyConnectionOpen = SendCommand(bufCommand,WiFlyFixedPrompts[WIFLY_MSG_OPEN], bufOpen, INDICATOR_BUFFER_SIZE, false, iWaitTime , true, false); 
   if( bWiFlyConnectionOpen) {
 	  bWiFlyInCommandMode = false;
@@ -896,33 +892,90 @@ boolean WiFlySerial::openConnection(const char* pURL, const unsigned long iWaitT
 // closeConnection
 // closes an open connection
 //
-// 
-// When closed via a command it the WiFly state is in command mode.
-// External connection close causes leaves WiFly in data mode
+// Parameters:
+// bSafeClose	   (default) Use slow 'safe close'
+//                 false if high confidence connection is in fact open, 
+//				   and can tolerate occasional errors if connection
+//                 closes sooner than expected.
+//                 
+// returns   true on close, false on failure.
+// Side effects: bWiFlyConnectionOpen should become false
+//          and  bWiFlyInCommandMode should become true.
+//
+// Notes:
+// 1. When closed via a command the WiFly state is in command mode.
+// 2. External connection close leaves WiFly in data mode
+// 3. Closing a closed connection results in an error.
+// 4. External connection close could happen at any time.
+// 5. getDeviceStatus() gives actual WiFly status at the moment of calling.
+// 6. When opened via listening, info from previous getDeviceStatus() is out-of-date.
+// 7. The 'close' command results with a command-prompt, no 'AOK' or similar.
+//     then, a *CLOS* signal appears.
+//
 // returns true on closure, false on failure to close.
 // 
-boolean WiFlySerial::closeConnection() {
+boolean WiFlySerial::closeConnection(boolean bSafeClose) {
   // if a connection is open then close it.
-  bWiFlyInCommandMode = false;
+  char chDrain;
+  
   if ( bWiFlyConnectionOpen ) {
       // first see if connection is *STILL* open. 
-	  getDeviceStatus();
-	  if ( isTCPConnected() ) {
-		  char bufCmd[INDICATOR_BUFFER_SIZE];
-		  char bufClose[COMMAND_BUFFER_SIZE];
-		  bWiFlyConnectionOpen = false;  // will get set to closed during result scan of close command.
-		 
-		  SendCommand(GetBuffer_P(STI_WIFLYDEVICE_CLOSE, bufCmd, INDICATOR_BUFFER_SIZE),WiFlyFixedPrompts[WIFLY_MSG_CLOSE],    bufClose,    COMMAND_BUFFER_SIZE, false, ATTN_WAIT_TIME);
-		  bWiFlyInCommandMode = true;
-		  return true;
-	  } else {
-	    bWiFlyInCommandMode = true; 
-        return true;
-	  }
+      boolean bClosed = false;
+      boolean bTrySafeClose = bSafeClose;
+      boolean bDoClose = true;
+      
+      // repeat until closed...
+      while ( bWiFlyConnectionOpen ) {
+		  if (bTrySafeClose) {
+			getDeviceStatus();
+			if ( isTCPConnected() && bWiFlyConnectionOpen ) {
+				bDoClose = true;
+			} else {
+				bDoClose = false;
+				bWiFlyConnectionOpen = false; // should be redundant as a caught *CLOS* will set this to false.
+			}
+		  } // if doing safe close
+		  if ( bDoClose ) {
+			  drain();
+			  char bufCmd[INDICATOR_BUFFER_SIZE];
+			  char bufClose[INDICATOR_BUFFER_SIZE];
+			  memset( bufCmd, '\0', INDICATOR_BUFFER_SIZE);
+			  memset( bufClose, '\0', INDICATOR_BUFFER_SIZE);
+			  
+			  // close command response is a prompt, then a *CLOS* signal after.
+			  SendCommand(GetBuffer_P(STI_WIFLYDEVICE_CLOSE, bufCmd, INDICATOR_BUFFER_SIZE),WiFlyFixedPrompts[WIFLY_MSG_PROMPT],    bufClose,    INDICATOR_BUFFER_SIZE, true, DEFAULT_WAIT_TIME , false);
+			  DebugPrint( bufCmd );
+			  DebugPrint( bufClose );
+
+			  drain();
+			  
+			  bWiFlyInCommandMode = true;
+		  }
+	  } // while
    } else {
+	  // closed externally already.
+	  // No change to bWiFlyCommandMode. 
       return true;
    }
+   return true;
 }
+
+// drain
+// Empties incoming buffer 
+
+int WiFlySerial::drain() {
+	char chDrain;
+	unsigned long TimeOutTime = millis() + DEFAULT_WAIT_TIME;
+	// DebugPrint("Waiting for signal");
+	while ( bWiFlyConnectionOpen && available() > 0 && millis() < TimeOutTime  ) {
+		chDrain = read();
+		DebugPrint( chDrain );
+	}
+	// DebugPrint("Drained.");
+
+	
+}
+
 
 // serveConnection
 // Waits for a client to connect on the given port.
@@ -941,7 +994,7 @@ boolean WiFlySerial::serveConnection( const unsigned long reconnectWaitTime )
    
   iRequest = ScanForPattern( bufRequest, COMMAND_BUFFER_SIZE, WiFlyFixedPrompts[WIFLY_MSG_OPEN], false,reconnectWaitTime );
   if ( ( iRequest &  PROMPT_EXPECTED_TOKEN_FOUND) == PROMPT_EXPECTED_TOKEN_FOUND ) {
-    memset (bufRequest,'\0',COMMAND_BUFFER_SIZE);
+    //memset (bufRequest,'\0',COMMAND_BUFFER_SIZE);
     bWiFlyInCommandMode = false;
     bReturn = true;
   } else {
@@ -1075,8 +1128,10 @@ char* WiFlySerial::getDeviceID(char* pbuf, int buflen) {
 unsigned long WiFlySerial::getTime() {
   char bufTimeSerial[COMMAND_BUFFER_SIZE];
   
-  return atol(ExtractDetailIdx( STI_WIFLYDEVICE_GET_TIME, bufTimeSerial, COMMAND_BUFFER_SIZE, STI_WIFLYDEVICE_GET_TIME_IND, STI_WIFLYDEVICE_RETURN ) );
+  return ( atol(ExtractDetailIdx( STI_WIFLYDEVICE_GET_TIME, bufTimeSerial, COMMAND_BUFFER_SIZE, STI_WIFLYDEVICE_GET_TIME_IND, STI_WIFLYDEVICE_RETURN ) ) + lUTC_Offset_seconds);
 }
+
+// TODO: add GetTimeStatus
 
 
 // getDeviceStatus
@@ -1473,6 +1528,15 @@ boolean WiFlySerial::setNTP_Update_Frequency(const char* pNTP_Update) {
   return issueSetting( STI_WIFLYDEVICE_SET_NTP_ENABLE, pNTP_Update );
 }
 
+// sets offset from UTC.
+// Parameters:
+// fltUTC_Offset_Hours  Number of hours from UTC  (e.g. PST = -8 )
+// Setting is used during setTime().
+// returns true always.
+boolean WiFlySerial::setNTP_UTC_Offset(float fltUTC_Offset_hours) {
+	lUTC_Offset_seconds = (long) (fltUTC_Offset_hours * 60 * 60);
+	return true;
+}
 // Sets WiFly DNS name
 boolean WiFlySerial::setDeviceID( const char* pDeviceID) {
  
@@ -1585,10 +1649,11 @@ boolean WiFlySerial::setJoinMode( int iJoinMode) {
 // Parameters:
 // iLocalPort    Port to listen to.
 
-boolean WiFlySerial::setLocalPort( int iLocalPort) {
+boolean WiFlySerial::setLocalPort( int iNewLocalPort) {
   char bufPort[10];
   
-  itoa( iLocalPort, bufPort, 10);
+  itoa( iNewLocalPort, bufPort, 10);
+  iLocalPort = iNewLocalPort;
   return issueSetting( STI_WIFLYDEVICE_SET_LOCAL_PORT, bufPort );
 }
 
@@ -1597,10 +1662,11 @@ boolean WiFlySerial::setLocalPort( int iLocalPort) {
 // Parameters:
 // iRemotePort    Port to contact on remote server.
 
-boolean WiFlySerial::setRemotePort( int iRemotePort) {
+boolean WiFlySerial::setRemotePort( int iNewRemotePort) {
   char bufPort[10];
   
-  itoa( iRemotePort, bufPort, 10);
+  itoa( iNewRemotePort, bufPort, 10);
+  iRemotePort = iNewRemotePort;
   return issueSetting( STI_WIFLYDEVICE_SET_REMOTE_PORT, bufPort );
 }
 

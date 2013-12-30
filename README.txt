@@ -42,7 +42,8 @@ INSTALLATION
 Library version:
 Copy the WiFlySerial files and Examples folders to a new folder in your Arduino Libraries path
 (e.g. /usr/share/arduino/libraries/WiFlySerial)
-Restart the IDE, the examples and libraries should then become available.
+Restart the IDE; the examples and libraries should then become available.
+Also: install Streaming.h, PString.h from arduiana.org, and Time.h from arduino.cc/libraries
 
 
 WebTimeA1.ino is a simple example webserver that shows the current time.
@@ -51,6 +52,8 @@ Add "/status" to the URL for additional status items, or "/auto" for 30-second r
 
 WiFly_TestA1.ino is a simple terminal for communicating to and from the WiFly.
 It is useful for exploring its features and debugging issues.
+
+WFSv3 is a proof-of-concept demo of Client/Server libraries based on the Arduino EthernetServer and EthernetClient models.
 
 =======
 SUPPORT
@@ -63,6 +66,12 @@ Additional commentary on http://arduinology.blogspot.com and http://arduinology.
 =======
 HISTORY
 =======
+*** 2012-May-05 1.08 Minor fix to setRemotePort();
+*** 2012-Apr-22 1.07 Time sync handling improvements and Client/Server library compilation issue resolved.
+
+*** 2012-Apr-14 1.06 Clean closing and faster data->command mode switching.
+    Preview of Client/Server libraries
+
 *** 2012-Mar-22 1.05 Noise reduction
    Miscellaneous stabilizations, cleanups and now finishes sending before listening.
 

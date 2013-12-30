@@ -9,7 +9,7 @@ Driver for Roving Network's WiFly GSX (c) (tm) b/g WiFi device
 
 Provides moderately-generic WiFi device interface.
 Compatible with Arduino 1.0
-Version 1.05
+Version 1.08
 
 - WiFlyGSX is a relatively intelligent peer.
 - WiFlyGSX may have awoken in a valid configured state while Arduino asleep; 
@@ -23,7 +23,7 @@ begin
 issue commands, such as set SSID, passphrase etc
 exit command mode / enter data mode
 listen for web activity
-Open a TCP connection to a peer
+Open a TCP/UDP connection to a peer
 send / receive data
 close connection
 
@@ -65,7 +65,7 @@ Copyright GPL 2.0 Tom Waldock 2011
 #define SMALL_COMMAND_BUFFER_SIZE 20
 #define RESPONSE_BUFFER_SIZE 80
 #define INDICATOR_BUFFER_SIZE 16
-#define IP_ADDR_WIDTH  16
+#define IP_ADDR_WIDTH  18
 #define UC_N_IP_BYTES  4      // number of bytes per IP Address (need test for IPv6)
 
 // default ports as set in WiFly - if you change these, make certain you call setRemotePort/setLocalPort
@@ -73,39 +73,41 @@ Copyright GPL 2.0 Tom Waldock 2011
 #define WIFLY_DEFAULT_LOCAL_PORT 2000  
 #define WIFLY_DEFAULT_BAUD_RATE 9600
 
-#define COMMAND_MODE_GUARD_TIME 300UL // in milliseconds.  Must be at least 250ms.
-#define DEFAULT_WAIT_TIME 1000UL  // waiting time for a command
-#define ATTN_WAIT_TIME 2000UL  // waiting time for a reponse after a $$$ attention signal
-#define JOIN_WAIT_TIME 10000UL  // joining a network could take longer
-#define SERVING_WAIT_TIME 300000UL   // 5 minutes default wait time for serving a connection in milliseconds
-#define WIFLY_RESTART_WAIT_TIME 2000UL  // wait time after issuing reboot command.
+#define COMMAND_MODE_GUARD_TIME 	300 // in milliseconds.  Must be at least 250ms.
+#define DEFAULT_WAIT_TIME			1000UL  // waiting time for a command
+#define ATTN_WAIT_TIME				1000UL  // waiting time for a reponse after a $$$ attention signal
+#define JOIN_WAIT_TIME 				10000UL  // joining a network could take longer
+#define SERVING_WAIT_TIME			300000UL   // 5 minutes default wait time for serving a connection in milliseconds
+#define WIFLY_RESTART_WAIT_TIME		2000UL  // wait time after issuing reboot command.
+#define WIFLY_TIME_SYNC_INTERVAL 	100UL   // 15 minute interval between clock resyncs
+#define WIFLY_NTP_SYNC_INTERVAL     "60"    // sync with NTP server every hour
 
 
 #define COMMAND_MODE_ENTER_RETRY_ATTEMPTS 5
 #define COMMAND_RETRY_ATTEMPTS 3
 
 // WiFly Responses  
-#define PROMPT_NONE			0x0
+#define PROMPT_NONE					0x0
 #define PROMPT_EXPECTED_TOKEN_FOUND	0x1
-#define PROMPT_READY 		   	0x2
-#define PROMPT_CMD_MODE 	   	0x4
-#define PROMPT_AOK 			    0x8
-#define PROMPT_OTHER 			0x10
-#define PROMPT_CMD_ERR 			0x20
-#define PROMPT_TIMEOUT 			0x40
-#define PROMPT_OPEN 			0x80
-#define PROMPT_CLOSE 			0x100
-#define PROMPT_OPEN_ALREADY		0x200
+#define PROMPT_READY 			   	0x2
+#define PROMPT_CMD_MODE 	   		0x4
+#define PROMPT_AOK 			    	0x8
+#define PROMPT_OTHER 				0x10
+#define PROMPT_CMD_ERR 				0x20
+#define PROMPT_TIMEOUT 				0x40
+#define PROMPT_OPEN 				0x80
+#define PROMPT_CLOSE 				0x100
+#define PROMPT_OPEN_ALREADY			0x200
 
-#define N_PROMPTS 9
-#define WIFLY_MSG_EXPECTED  0
-#define WIFLY_MSG_AOK  1
-#define WIFLY_MSG_CMD  2
-#define WIFLY_MSG_ERR  3
-#define WIFLY_MSG_PROMPT  4
-#define WIFLY_MSG_PROMPT2  5
-#define WIFLY_MSG_CLOSE  6
-#define WIFLY_MSG_OPEN  7
+#define N_PROMPTS 				9
+#define WIFLY_MSG_EXPECTED  	0
+#define WIFLY_MSG_AOK  			1
+#define WIFLY_MSG_CMD  			2
+#define WIFLY_MSG_ERR  			3
+#define WIFLY_MSG_PROMPT  		4
+#define WIFLY_MSG_PROMPT2  		5
+#define WIFLY_MSG_CLOSE  		6
+#define WIFLY_MSG_OPEN  		7
 #define WIFLY_MSG_OPEN_ALREADY  8
 
 // Auth Modes for Network Authentication
@@ -141,7 +143,7 @@ Copyright GPL 2.0 Tom Waldock 2011
 
 
 // WiFly-specific prompt codes
-static char* WiFlyFixedPrompts[N_PROMPTS] = { "","AOK","CMD","ERR: ?", "",">","*CLOS*","*OPEN*","ERR:Connected" };
+static char* WiFlyFixedPrompts[N_PROMPTS] = { "","AOK", "CMD", "ERR: ?", "",">","*CLOS*","*OPEN*","ERR:Connected" };
 static byte  WiFlyFixedFlags[N_PROMPTS] = {PROMPT_EXPECTED_TOKEN_FOUND, PROMPT_AOK, PROMPT_CMD_MODE, PROMPT_CMD_ERR, PROMPT_READY,    	PROMPT_READY,PROMPT_CLOSE, PROMPT_OPEN, PROMPT_OPEN_ALREADY};
 
 // Utility functions
@@ -204,6 +206,7 @@ class WiFlySerial : public Stream {
     boolean setDeviceID( const char* pHostname);
     boolean setNTP(const char* pNTP_IP);
     boolean setNTP_Update_Frequency(const char* pFreq);
+    boolean setNTP_UTC_Offset(float fltUTC_Offset_hours);
     boolean setIP( const char* pIP);
     boolean setNetMask( const char* pNM);
     boolean setGateway( const char* pGW);
@@ -232,7 +235,7 @@ class WiFlySerial : public Stream {
     
     // Client Connection
     boolean openConnection(const char* pURL, const unsigned long WaitTime = JOIN_WAIT_TIME  );
-    boolean closeConnection();
+    boolean closeConnection(boolean bSafeClose = true);
     
     // Server Connection - waits for a client to connect
     boolean serveConnection(  const unsigned long reconnectWaitTIme = SERVING_WAIT_TIME );
@@ -257,6 +260,8 @@ class WiFlySerial : public Stream {
     virtual int read();
     virtual int available();
     virtual void flush();
+    
+    int drain ();
   
     using Print::write;
 
@@ -284,6 +289,7 @@ class WiFlySerial : public Stream {
     // Ports for connections
     int     iRemotePort;
     int     iLocalPort;
+    long 	lUTC_Offset_seconds;
     
 
     boolean GetCmdPrompt();

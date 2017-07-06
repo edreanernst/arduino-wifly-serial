@@ -9,7 +9,7 @@ Driver for Roving Network's WiFly GSX (c) (tm) b/g WiFi device
 
 Provides moderately-generic WiFi device interface.
 Compatible with Arduino 1.0
-Version 1.08
+Version 1.09
 
 - WiFlyGSX is a relatively intelligent peer.
 - WiFlyGSX may have awoken in a valid configured state while Arduino asleep; 

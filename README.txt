@@ -66,6 +66,7 @@ Additional commentary on http://arduinology.blogspot.com and http://arduinology.
 =======
 HISTORY
 =======
+*** 2017-Jul-06 1.09 Compatibility with newer Android IDE versions which utilize the newer avr-gcc toolset (deprecated prog_).
 *** 2012-May-05 1.08 Minor fix to setRemotePort();
 *** 2012-Apr-22 1.07 Time sync handling improvements and Client/Server library compilation issue resolved.
 

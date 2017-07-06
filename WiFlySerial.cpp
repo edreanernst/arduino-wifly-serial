@@ -6,7 +6,7 @@ Driver for Roving Network's WiFly GSX (c) (tm) b/g WiFi device
 
 Provides moderately-generic WiFi device interface.
 Compatible with Arduino 1.0
-Version 1.08
+Version 1.09
 
 - WiFlyGSX is a relatively intelligent peer.
 - WiFlyGSX may have awoken in a valid configured state while Arduino asleep; 
@@ -54,64 +54,64 @@ Copyright GPL 2.1 Tom Waldock 2011, 2012
 
 
 // Strings stored in Program space
-prog_char s_WIFLYDEVICE_LIBRARY_VERSION[] PROGMEM = "WiFlySerial v1.08" ;   
-prog_char s_WIFLYDEVICE_JOIN[] PROGMEM = "join " ;   
-prog_char s_WIFLYDEVICE_OPEN[] PROGMEM = "open " ;   
-prog_char s_WIFLYDEVICE_CLOSE[] PROGMEM = "close" ;   
-prog_char s_WIFLYDEVICE_ASSOCIATED[] PROGMEM = "ssociated" ;   
-prog_char s_WIFLYDEVICE_ATTN[] PROGMEM = "$$$";   
-prog_char s_WIFLYDEVICE_VER[] PROGMEM = "ver" ;
-prog_char s_WIFLYDEVICE_LEAVE_CMD_MODE[] PROGMEM ="exit";
-prog_char s_WIFLYDEVICE_REBOOT[] PROGMEM ="reboot";
-prog_char s_WIFLYDEVICE_SAVE[] PROGMEM ="save";
-prog_char s_WIFLYDEVICE_GET_MAC[] PROGMEM =" get mac";
-prog_char s_WIFLYDEVICE_GET_MAC_ADDR[] PROGMEM ="Addr=";
-prog_char s_WIFLYDEVICE_GET_IP[] PROGMEM =" get ip";
-prog_char s_WIFLYDEVICE_GET_GW[] PROGMEM = " "; // "GW=";
-prog_char s_WIFLYDEVICE_GET_NM[] PROGMEM = " "; // "NM=";
-prog_char s_WIFLYDEVICE_LEAVE[] PROGMEM ="leave";
-prog_char s_WIFLYDEVICE_SET_SSID[] PROGMEM =" set wlan s ";
-prog_char s_WIFLYDEVICE_SET_CHANNEL[] PROGMEM =" set wlan c ";
-prog_char s_WIFLYDEVICE_SET_WIFI_AUTH[] PROGMEM =" set wlan a ";
-prog_char s_WIFLYDEVICE_SET_WIFI_JOIN[] PROGMEM =" set wlan j ";
-prog_char s_WIFLYDEVICE_SET_PASSPHRASE[] PROGMEM =" set w p ";
-prog_char s_WIFLYDEVICE_NETWORK_SCAN[] PROGMEM ="scan ";
-prog_char s_WIFLYDEVICE_AOK[] PROGMEM ="";
-prog_char s_WIFLYDEVICE_SET_UART_BAUD[] PROGMEM ="set u b 9600 ";
-prog_char s_WIFLYDEVICE_DEAUTH[] PROGMEM ="Deauth";
-prog_char s_WIFLYDEVICE_SET_NTP[] PROGMEM =" set time a ";
-prog_char s_WIFLYDEVICE_SET_NTP_ENABLE[] PROGMEM ="set time e ";
-prog_char s_WIFLYDEVICE_SET_DEVICEID[] PROGMEM ="set opt deviceid ";
-prog_char s_WIFLYDEVICE_IP_DETAILS[] PROGMEM ="get ip";
-prog_char s_WIFLYDEVICE_GET_DNS_DETAILS[] PROGMEM ="get dns";
-prog_char s_WIFLYDEVICE_GET_TIME[] PROGMEM ="show t t";
-prog_char s_WIFLYDEVICE_SET_DHCP[] PROGMEM ="set ip dhcp ";
-prog_char s_WIFLYDEVICE_SET_IP[] PROGMEM ="set ip a ";
-prog_char s_WIFLYDEVICE_SET_NETMASK[] PROGMEM ="set ip n ";
-prog_char s_WIFLYDEVICE_SET_GATEWAY[] PROGMEM ="set ip g ";
-prog_char s_WIFLYDEVICE_SET_DNS[] PROGMEM ="set dns addr ";
-prog_char s_WIFLYDEVICE_SET_LOCAL_PORT[] PROGMEM ="set ip local ";
-prog_char s_WIFLYDEVICE_SET_REMOTE_PORT[] PROGMEM ="set ip remote  ";
-prog_char s_WIFLYDEVICE_SET_PROTOCOL[] PROGMEM ="set ip proto ";
-prog_char s_WIFLYDEVICE_ERR_REBOOOT[] PROGMEM ="Attempting reboot";
-prog_char s_WIFLYDEVICE_ERR_START_FAIL[] PROGMEM ="Failed to get cmd prompt:Halted.";
-prog_char s_WIFLYDEVICE_SET_UART_MODE[] PROGMEM ="set u m 1 ";
-prog_char s_WIFLYDEVICE_GET_WLAN[] PROGMEM ="get wlan ";
-prog_char s_WIFLYDEVICE_GET_RSSI[] PROGMEM ="show rssi ";
-prog_char s_WIFLYDEVICE_GET_BATTERY[] PROGMEM ="show batt ";
-prog_char s_WIFLYDEVICE_GET_STATUS[] PROGMEM ="show conn ";
-prog_char s_WIFLYDEVICE_RETURN[] PROGMEM ="\r";
-prog_char s_WIFLYDEVICE_GET_IP_IND[] PROGMEM ="IP=";
-prog_char s_WIFLYDEVICE_GET_NM_IND[] PROGMEM ="NM=";
-prog_char s_WIFLYDEVICE_GET_GW_IND[] PROGMEM ="GW=";
-prog_char s_WIFLYDEVICE_GET_DNS_IND[] PROGMEM ="DNS=";
-prog_char s_WIFLYDEVICE_GET_WLAN_SSID_IND[] PROGMEM ="SSID=";
-prog_char s_WIFLYDEVICE_GET_RSSI_IND[] PROGMEM ="RSSI=";
-prog_char s_WIFLYDEVICE_GET_WLAN_DEV_IND[] PROGMEM ="DeviceID=";
-prog_char s_WIFLYDEVICE_GET_BATTERY_IND[] PROGMEM ="Batt=";
-prog_char s_WIFLYDEVICE_GET_TIME_IND[] PROGMEM ="RTC=";
-prog_char s_WIFLYDEVICE_GET_STATUS_IND[] PROGMEM ="8";
-prog_char s_WIFLYDEVICE_GET_IP_UP_IND[] PROGMEM ="F=";
+const char s_WIFLYDEVICE_LIBRARY_VERSION[] PROGMEM = "WiFlySerial v1.09" ;   
+const char s_WIFLYDEVICE_JOIN[] PROGMEM = "join " ;   
+const char s_WIFLYDEVICE_OPEN[] PROGMEM = "open " ;   
+const char s_WIFLYDEVICE_CLOSE[] PROGMEM = "close" ;   
+const char s_WIFLYDEVICE_ASSOCIATED[] PROGMEM = "ssociated" ;   
+const char s_WIFLYDEVICE_ATTN[] PROGMEM = "$$$";   
+const char s_WIFLYDEVICE_VER[] PROGMEM = "ver" ;
+const char s_WIFLYDEVICE_LEAVE_CMD_MODE[] PROGMEM ="exit";
+const char s_WIFLYDEVICE_REBOOT[] PROGMEM ="reboot";
+const char s_WIFLYDEVICE_SAVE[] PROGMEM ="save";
+const char s_WIFLYDEVICE_GET_MAC[] PROGMEM =" get mac";
+const char s_WIFLYDEVICE_GET_MAC_ADDR[] PROGMEM ="Addr=";
+const char s_WIFLYDEVICE_GET_IP[] PROGMEM =" get ip";
+const char s_WIFLYDEVICE_GET_GW[] PROGMEM = " "; // "GW=";
+const char s_WIFLYDEVICE_GET_NM[] PROGMEM = " "; // "NM=";
+const char s_WIFLYDEVICE_LEAVE[] PROGMEM ="leave";
+const char s_WIFLYDEVICE_SET_SSID[] PROGMEM =" set wlan s ";
+const char s_WIFLYDEVICE_SET_CHANNEL[] PROGMEM =" set wlan c ";
+const char s_WIFLYDEVICE_SET_WIFI_AUTH[] PROGMEM =" set wlan a ";
+const char s_WIFLYDEVICE_SET_WIFI_JOIN[] PROGMEM =" set wlan j ";
+const char s_WIFLYDEVICE_SET_PASSPHRASE[] PROGMEM =" set w p ";
+const char s_WIFLYDEVICE_NETWORK_SCAN[] PROGMEM ="scan ";
+const char s_WIFLYDEVICE_AOK[] PROGMEM ="";
+const char s_WIFLYDEVICE_SET_UART_BAUD[] PROGMEM ="set u b 9600 ";
+const char s_WIFLYDEVICE_DEAUTH[] PROGMEM ="Deauth";
+const char s_WIFLYDEVICE_SET_NTP[] PROGMEM =" set time a ";
+const char s_WIFLYDEVICE_SET_NTP_ENABLE[] PROGMEM ="set time e ";
+const char s_WIFLYDEVICE_SET_DEVICEID[] PROGMEM ="set opt deviceid ";
+const char s_WIFLYDEVICE_IP_DETAILS[] PROGMEM ="get ip";
+const char s_WIFLYDEVICE_GET_DNS_DETAILS[] PROGMEM ="get dns";
+const char s_WIFLYDEVICE_GET_TIME[] PROGMEM ="show t t";
+const char s_WIFLYDEVICE_SET_DHCP[] PROGMEM ="set ip dhcp ";
+const char s_WIFLYDEVICE_SET_IP[] PROGMEM ="set ip a ";
+const char s_WIFLYDEVICE_SET_NETMASK[] PROGMEM ="set ip n ";
+const char s_WIFLYDEVICE_SET_GATEWAY[] PROGMEM ="set ip g ";
+const char s_WIFLYDEVICE_SET_DNS[] PROGMEM ="set dns addr ";
+const char s_WIFLYDEVICE_SET_LOCAL_PORT[] PROGMEM ="set ip local ";
+const char s_WIFLYDEVICE_SET_REMOTE_PORT[] PROGMEM ="set ip remote  ";
+const char s_WIFLYDEVICE_SET_PROTOCOL[] PROGMEM ="set ip proto ";
+const char s_WIFLYDEVICE_ERR_REBOOOT[] PROGMEM ="Attempting reboot";
+const char s_WIFLYDEVICE_ERR_START_FAIL[] PROGMEM ="Failed to get cmd prompt:Halted.";
+const char s_WIFLYDEVICE_SET_UART_MODE[] PROGMEM ="set u m 1 ";
+const char s_WIFLYDEVICE_GET_WLAN[] PROGMEM ="get wlan ";
+const char s_WIFLYDEVICE_GET_RSSI[] PROGMEM ="show rssi ";
+const char s_WIFLYDEVICE_GET_BATTERY[] PROGMEM ="show batt ";
+const char s_WIFLYDEVICE_GET_STATUS[] PROGMEM ="show conn ";
+const char s_WIFLYDEVICE_RETURN[] PROGMEM ="\r";
+const char s_WIFLYDEVICE_GET_IP_IND[] PROGMEM ="IP=";
+const char s_WIFLYDEVICE_GET_NM_IND[] PROGMEM ="NM=";
+const char s_WIFLYDEVICE_GET_GW_IND[] PROGMEM ="GW=";
+const char s_WIFLYDEVICE_GET_DNS_IND[] PROGMEM ="DNS=";
+const char s_WIFLYDEVICE_GET_WLAN_SSID_IND[] PROGMEM ="SSID=";
+const char s_WIFLYDEVICE_GET_RSSI_IND[] PROGMEM ="RSSI=";
+const char s_WIFLYDEVICE_GET_WLAN_DEV_IND[] PROGMEM ="DeviceID=";
+const char s_WIFLYDEVICE_GET_BATTERY_IND[] PROGMEM ="Batt=";
+const char s_WIFLYDEVICE_GET_TIME_IND[] PROGMEM ="RTC=";
+const char s_WIFLYDEVICE_GET_STATUS_IND[] PROGMEM ="8";
+const char s_WIFLYDEVICE_GET_IP_UP_IND[] PROGMEM ="F=";
 
 // Index of strings
 #define STI_WIFLYDEVICE_INDEX_JOIN        0
@@ -174,7 +174,7 @@ prog_char s_WIFLYDEVICE_GET_IP_UP_IND[] PROGMEM ="F=";
 #define STI_WIFLYDEVICE_SAVE              57
 
 // String Table in Program space
-PROGMEM const char *WiFlyDevice_string_table[] = 	   
+const char * const WiFlyDevice_string_table[] PROGMEM = 	   
 { 
   // 0-based index, see STI_WIFLY_DEVICE_ list above.  
   s_WIFLYDEVICE_JOIN,
